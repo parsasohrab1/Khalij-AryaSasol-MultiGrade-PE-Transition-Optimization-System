@@ -203,3 +203,30 @@ print(df.describe())
 - [Predicting polymer melt flow index and catalytic activity using a pretrained transformer-based model — Polymer Bulletin](https://link.springer.com/article/10.1007/s00289-026-06341-5)
 - [US10577435 — Ethylene gas phase polymerisation process](https://image-ppubs.uspto.gov/dirsearch-public/print/downloadPdf/10577435)
 - [US9926390 — Method for production of polymer](https://image-ppubs.uspto.gov/dirsearch-public/print/downloadPdf/9926390)
+
+---
+
+## 8. Implementation Status
+
+Python package `khalij_ampt` (`src/khalij_ampt/`), tests in `tests/`.
+
+| Phase | Status | Module |
+|---|---|---|
+| 1 Infrastructure + simulator | Done (physics-based, replaces the random generator in §3) | `simulator.py`, `grades.py`, `dynamics.py` |
+| 2 MFI/density virtual sensor | Done on simulated data (LDPE/HDPE twins, streaming path) | `twin.py` |
+| 3 Transient catalyst activity | Done on simulated data (activity dip after setpoint change) | `twin.py` |
+| 4 Portfolio sequence optimizer | Done: exact Held-Karp per unit + 2-opt fallback; per-pair overshoot transition path (FR-SEQ-02) | `optimizer.py`, `dynamics.py` |
+| 5 Sequence-map dashboard | Not started | — |
+| 6 Pilot | Not started | — |
+
+```bash
+pip install -e .[dev]
+pytest
+khalij-ampt train      # virtual sensor accuracy + streaming latency
+khalij-ampt plan       # monthly changeover plan vs baselines
+khalij-ampt simulate   # CSV of synthetic DCS data for both units
+```
+
+**Caveat:** grade specs (MFI/density), time constants, tolerances and the activity-dip model are
+illustrative placeholders. All reported gains come from the simulator and must be re-identified on
+real DCS/LIMS data before any operational claim.
