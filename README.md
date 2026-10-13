@@ -224,8 +224,13 @@ pip install -e .[dev]
 pytest
 khalij-ampt train      # virtual sensor accuracy + streaming latency
 khalij-ampt plan       # monthly changeover plan vs baselines
+khalij-ampt dashboard  # HTML grade sequence map
+khalij-ampt --grades config/grades.csv plan   # use real datasheet values (placeholders by default)
 khalij-ampt simulate   # CSV of synthetic DCS data for both units
 ```
+
+**Infrastructure (untested):** `infra/docker-compose.yml` (Kafka + TimescaleDB) with `infra/timescale_init.sql`, and
+`services/ldpe-hdpe-ingestion/replay_to_kafka.py` replaying simulated DCS data. No real DCS connector or consumer yet.
 
 **Caveat:** grade specs (MFI/density), time constants, tolerances and the activity-dip model are
 illustrative placeholders. All reported gains come from the simulator and must be re-identified on

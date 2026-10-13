@@ -82,3 +82,26 @@ def test_virtual_sensor_meets_nfr_mape(unit):
     twin = QualityCatalystTwin(unit).fit(df.iloc[:cut])
     m = twin.evaluate(df.iloc[cut:].reset_index(drop=True))
     assert m["mape_mfi_pct"] < 10  # NFR-PER-02
+
+
+def test_load_grades_roundtrip_and_validation(tmp_path):
+    from khalij_ampt.grades import GRADES, load_grades
+    saved = dict(GRADES)
+    try:
+        bad = tmp_path / "bad.csv"
+        bad.write_text("id,unit,mfi,density\nX1,LDPE,1.0,0.99\n")
+        with pytest.raises(ValueError):
+            load_grades(str(bad))
+        assert GRADES == saved  # failed load leaves the portfolio untouched
+        load_grades("config/grades.csv")
+        assert GRADES == saved
+    finally:
+        GRADES.clear()
+        GRADES.update(saved)
+
+
+def test_dashboard_renders_all_grades():
+    from khalij_ampt.dashboard import render
+    plan = optimize_unit("LDPE", "LDPE-G1", random_demand("LDPE", seed=0))
+    html = render({"LDPE": plan}, {"LDPE": "LDPE-G1"})
+    assert all(g in html for g in plan.sequence) and "Grade sequence map" in html

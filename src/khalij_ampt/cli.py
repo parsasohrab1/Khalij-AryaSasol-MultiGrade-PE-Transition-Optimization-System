@@ -7,7 +7,8 @@ from pathlib import Path
 
 import pandas as pd
 
-from .grades import UNITS, grades_of
+from .grades import UNITS, grades_of, load_grades
+from .dashboard import render
 from .optimizer import baselines, optimize_unit
 from .simulator import random_campaigns, random_demand, simulate_unit
 from .twin import QualityCatalystTwin
@@ -66,6 +67,15 @@ def cmd_plan(a: argparse.Namespace) -> None:
     print("NOTE: grade specs and dynamics are placeholders, not plant-identified values.")
 
 
+def cmd_dashboard(a: argparse.Namespace) -> None:
+    plans, start = {}, {}
+    for i, u in enumerate(UNITS):
+        start[u] = grades_of(u)[0].id
+        plans[u] = optimize_unit(u, start[u], random_demand(u, seed=a.seed + i), a.horizon)
+    Path(a.out).write_text(render(plans, start), encoding="utf-8")
+    print(f"saved {a.out}")
+
+
 def main() -> None:
     p = argparse.ArgumentParser(prog="khalij-ampt")
     sub = p.add_subparsers(required=True)
@@ -83,7 +93,15 @@ def main() -> None:
     q.add_argument("--horizon", type=float, default=720.0)
     q.add_argument("--seed", type=int, default=0)
     q.set_defaults(fn=cmd_plan)
+    d = sub.add_parser("dashboard", help="write the grade sequence map as HTML")
+    d.add_argument("--horizon", type=float, default=720.0)
+    d.add_argument("--seed", type=int, default=0)
+    d.add_argument("--out", default="sequence_map.html")
+    d.set_defaults(fn=cmd_dashboard)
+    p.add_argument("--grades", help="CSV of id,unit,mfi,density replacing the placeholder portfolio")
     a = p.parse_args()
+    if a.grades:
+        load_grades(a.grades)
     a.fn(a)
 
 

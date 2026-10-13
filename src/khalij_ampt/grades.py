@@ -63,3 +63,23 @@ for i, (m, d) in enumerate(_HDPE, 1):
 
 def grades_of(unit: str) -> list[Grade]:
     return [g for g in GRADES.values() if g.unit == unit]
+
+
+def load_grades(path: str) -> None:
+    """Replace the portfolio in place from a CSV with columns id,unit,mfi,density.
+
+    Use this to load the real Arya Sasol datasheet values (see config/grades.csv).
+    """
+    import csv
+
+    with open(path, newline="", encoding="utf-8") as f:
+        rows = [Grade(r["id"], r["unit"], float(r["mfi"]), float(r["density"]))
+                for r in csv.DictReader(f)]
+    for g in rows:
+        if g.unit not in UNITS:
+            raise ValueError(f"unknown unit {g.unit!r} for grade {g.id}")
+        h, c = g.recipe()
+        if c < 0:
+            raise ValueError(f"{g.id}: density {g.density} above unit ceiling {UNITS[g.unit].rho0}")
+    GRADES.clear()
+    GRADES.update({g.id: g for g in rows})
